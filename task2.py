@@ -4,16 +4,17 @@ from Crypto.Cipher import DES, DES3, AES
 from Crypto.Util.Padding import pad, unpad
 import os
 
-BLOCK_SIZE_DES = 8  # Block size for DES and 3DES
-BLOCK_SIZE_AES = 16  # Block size for AES
+BLOCK_SIZE_DES = 8  # Block size for DES and 3DES (in bytes)
+BLOCK_SIZE_AES = 16  # Block size for AES (in bytes)
 
 
 # Function to handle file encryption
 def encrypt_file(filepath, key, algorithm):
+    # File opening
     with open(filepath, 'rb') as file:
         plaintext = file.read()
 
-    # Padding and encryption
+    # Padding and encryption (every algorithm in ECB mode)
     if algorithm == 'DES':
         cipher = DES.new(key, DES.MODE_ECB)
         padded_plaintext = pad(plaintext, DES.block_size)
@@ -29,14 +30,16 @@ def encrypt_file(filepath, key, algorithm):
     # Save encrypted file
     encrypted_filepath = filepath + f'.{algorithm.lower()}'
     with open(encrypted_filepath, 'wb') as file:
+        # Saving encrypted file
         file.write(ciphertext)
 
 
 def decrypt_file(filepath, key, algorithm):
     with open(filepath, 'rb') as file:
+        # Encrypted file opening
         ciphertext = file.read()
 
-    # Decryption
+    # Decryption (every algorithm in ECB mode)
     try:
         if algorithm == 'DES':
             cipher = DES.new(key, DES.MODE_ECB)
@@ -51,12 +54,14 @@ def decrypt_file(filepath, key, algorithm):
         # Save decrypted file (removing the .des, .des3, or .aes extension)
         decrypted_filepath = filepath.replace(f'.{algorithm.lower()}', '')
         with open(decrypted_filepath, 'wb') as file:
+            # Saving decrypted file
             file.write(plaintext)
     except ValueError as e:
+        # Error handling
         messagebox.showerror("Decryption failed", "Decryption failed: " + str(e))
 
 
-# Function to encrypt or decrypt folders
+# Function to encrypt or decrypt folders (recurrent)
 def process_folder(folder_path, key, algorithm, mode):
     for root, dirs, files in os.walk(folder_path):
         for file in files:
