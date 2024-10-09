@@ -23,14 +23,20 @@ def generate_key(algorithm):
 
 # Function to validate key length
 def validate_key_length(key, algorithm):
-    length = len(bytes.fromhex(key))
+    try:
+        key_bytes = bytes.fromhex(key)  # Attempt to convert hex key to bytes
+    except ValueError:
+        return "Invalid key format. Key must be a valid hexadecimal string."
+
+    length = len(key_bytes)
     if algorithm == 'DES' and length != 8:
         return "DES key must be 8 bytes long."
     elif algorithm == '3DES' and length not in [16, 24]:
         return "3DES key must be either 16 or 24 bytes long."
     elif algorithm == 'AES' and length not in [16, 24, 32]:
         return "AES key must be 16, 24, or 32 bytes long."
-    return None
+
+    return None  # If no errors, return None
 
 
 # Function to handle file encryption
@@ -63,7 +69,7 @@ def encrypt_file(filepath, key, algorithm):
             file.write(ciphertext)
 
         os.remove(filepath)  # Delete the original file
-        messagebox.showinfo("Success", f"Encrypted file saved as {encrypted_filepath}.")
+        status_label.config(text=f"Encrypted file saved as {encrypted_filepath}.", fg="green")
 
     except Exception as e:
         messagebox.showerror("Error", f"Failed to encrypt {filepath}: {str(e)}")
@@ -96,7 +102,7 @@ def decrypt_file(filepath, key, algorithm):
             file.write(plaintext)
 
         os.remove(filepath)  # Delete the encrypted file after successful decryption
-        messagebox.showinfo("Success", f"Decrypted file saved as {decrypted_filepath}.")
+        status_label.config(text=f"Decrypted file saved as {decrypted_filepath}.", fg="green")
 
     except Exception as e:
         messagebox.showerror("Decryption failed", "Decryption failed: " + str(e))
@@ -144,11 +150,12 @@ def browse_folder():
 def generate():
     algorithm = algorithm_choice.get()
     if not algorithm:
-        messagebox.showerror("Selection Error", "Please select an algorithm before generating a key.")
+        status_label.config(text="Please select an algorithm before generating a key.", fg="red")
         return
     key = generate_key(algorithm)
     key_entry.delete(0, tk.END)
     key_entry.insert(0, key)
+    status_label.config(text="Key generated successfully.", fg="green")
 
 
 def encrypt():
@@ -157,12 +164,12 @@ def encrypt():
     algorithm = algorithm_choice.get()
 
     if not key or not filepath:
-        messagebox.showerror("Input Error", "Please provide both key and file/folder path.")
+        status_label.config(text="Please provide both key and file/folder path.", fg="red")
         return
 
     key_error = validate_key_length(key, algorithm)
     if key_error:
-        messagebox.showerror("Key Error", key_error)
+        status_label.config(text=key_error, fg="red")
         return
 
     if os.path.isfile(filepath):
@@ -170,7 +177,7 @@ def encrypt():
     elif os.path.isdir(filepath):
         process_folder(filepath, key, algorithm, 'encrypt')
 
-    messagebox.showinfo("Success", "Encryption completed!")
+    status_label.config(text="Encryption completed!", fg="green")
 
 
 def decrypt():
@@ -179,12 +186,12 @@ def decrypt():
     algorithm = algorithm_choice.get()
 
     if not key or not filepath:
-        messagebox.showerror("Input Error", "Please provide both key and file/folder path.")
+        status_label.config(text="Please provide both key and file/folder path.", fg="red")
         return
 
     key_error = validate_key_length(key, algorithm)
     if key_error:
-        messagebox.showerror("Key Error", key_error)
+        status_label.config(text=key_error, fg="red")
         return
 
     if os.path.isfile(filepath):
@@ -192,7 +199,7 @@ def decrypt():
     elif os.path.isdir(filepath):
         process_folder(filepath, key, algorithm, 'decrypt')
 
-    messagebox.showinfo("Success", "Decryption completed!")
+    status_label.config(text="Decryption completed!", fg="green")
 
 
 # GUI creation
@@ -229,6 +236,10 @@ encrypt_button.grid(row=3, column=1, padx=10, pady=10)
 
 decrypt_button = tk.Button(root, text="Decrypt", command=decrypt)
 decrypt_button.grid(row=3, column=2, padx=10, pady=10)
+
+# Status label to show messages
+status_label = tk.Label(root, text="", fg="blue")
+status_label.grid(row=4, column=1, columnspan=3, padx=10, pady=10)
 
 # Start the GUI loop
 root.mainloop()
