@@ -12,6 +12,7 @@ BLOCK_SIZE_AES = 16  # Block size for AES (in bytes)
 
 # Function to generate a key based on the algorithm
 def generate_key(algorithm):
+    key = None
     if algorithm == 'DES':
         key = get_random_bytes(8)  # 8 bytes for DES
     elif algorithm == '3DES':
@@ -49,18 +50,24 @@ def encrypt_file(filepath, key, algorithm):
         with open(filepath, 'rb') as file:
             plaintext = file.read()
 
+        iv = None
+        cipher = None
+        padded_plaintext = None
         # Padding and encryption (every algorithm in ECB mode)
         if algorithm == 'DES':
-            cipher = DES.new(key, DES.MODE_ECB)
+            iv = get_random_bytes(DES.block_size)
+            cipher = DES.new(key, DES.MODE_CBC, iv)
             padded_plaintext = pad(plaintext, DES.block_size)
         elif algorithm == '3DES':
-            cipher = DES3.new(key, DES3.MODE_ECB)
+            iv = get_random_bytes(DES3.block_size)
+            cipher = DES3.new(key, DES3.MODE_CBC, iv)
             padded_plaintext = pad(plaintext, DES3.block_size)
         elif algorithm == 'AES':
-            cipher = AES.new(key, AES.MODE_ECB)
+            iv = get_random_bytes(AES.block_size)
+            cipher = AES.new(key, AES.MODE_CBC, iv)
             padded_plaintext = pad(plaintext, AES.block_size)
 
-        ciphertext = cipher.encrypt(padded_plaintext)
+        ciphertext = iv + cipher.encrypt(padded_plaintext)
 
         # Save encrypted file
         encrypted_filepath = f"{filepath}.{algorithm.lower()}"
@@ -81,18 +88,20 @@ def decrypt_file(filepath, key, algorithm):
         key = bytes.fromhex(key)
 
         with open(filepath, 'rb') as file:
-            # Encrypted file opening
+            # Read the IV (first block) and ciphertext (rest)
+            iv = file.read(BLOCK_SIZE_DES if algorithm == 'DES' else BLOCK_SIZE_AES)
             ciphertext = file.read()
 
+        plaintext = None
         # Decryption (every algorithm in ECB mode)
         if algorithm == 'DES':
-            cipher = DES.new(key, DES.MODE_ECB)
+            cipher = DES.new(key, DES.MODE_CBC, iv)
             plaintext = unpad(cipher.decrypt(ciphertext), DES.block_size)
         elif algorithm == '3DES':
-            cipher = DES3.new(key, DES3.MODE_ECB)
+            cipher = DES3.new(key, DES3.MODE_CBC, iv)
             plaintext = unpad(cipher.decrypt(ciphertext), DES3.block_size)
         elif algorithm == 'AES':
-            cipher = AES.new(key, AES.MODE_ECB)
+            cipher = AES.new(key, AES.MODE_CBC, iv)
             plaintext = unpad(cipher.decrypt(ciphertext), AES.block_size)
 
         # Save decrypted file (removing the .des, .des3, or .aes extension)
@@ -142,9 +151,9 @@ def browse_file():
 
 
 def browse_folder():
-    folderpath = filedialog.askdirectory()
+    folder_path = filedialog.askdirectory()
     file_entry.delete(0, tk.END)
-    file_entry.insert(0, folderpath)
+    file_entry.insert(0, folder_path)
 
 
 def generate():
