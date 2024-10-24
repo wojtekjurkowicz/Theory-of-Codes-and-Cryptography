@@ -182,6 +182,14 @@ def decrypt_file(filepath, password, algorithm):
         os.remove(filepath)  # Delete the encrypted file after successful decryption
         status_label.config(text=f"Decrypted file saved as {decrypted_filepath}.", fg="green")
 
+    except ValueError as e:
+        if "Padding is incorrect" in str(e):
+            messagebox.showerror("Decryption failed", "Incorrect password. Decryption failed due to invalid padding.")
+        elif "MAC check failed" in str(e):
+            messagebox.showerror("Decryption failed", "Incorrect password. HMAC verification failed.")
+        else:
+            messagebox.showerror("Decryption failed", "Decryption failed: " + str(e))
+
     except Exception as e:
         messagebox.showerror("Decryption failed", "Decryption failed: " + str(e))
 
@@ -216,7 +224,7 @@ def generate():
     key_entry.insert(0, password)
 
     # Optionally, display the derived key
-    derived_key_label.config(text=f"Derived Key: {key.hex()}")
+    # derived_key_label.config(text=f"Derived Key: {key.hex()}")
 
     status_label.config(text="Password and key generated successfully.", fg="green")
 
