@@ -1,6 +1,6 @@
 ## Repository for Theory of Codes and Cryptography class
 
-### task2.py
+### Crypto Tool
 It's an application for encrypting/decrypting your files or directories created in Python using tkinter and pycryptodome mostly.
 
 #### How to use:
