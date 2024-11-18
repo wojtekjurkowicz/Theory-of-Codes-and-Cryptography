@@ -6,7 +6,7 @@ from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 
-# Constant for AES block size
+# Constant
 BLOCK_SIZE_AES = 16  # Block size for AES encryption
 
 
@@ -40,11 +40,18 @@ def generate_rsa_keypair():
 
 
 def save_rsa_keys(public_key, pub_filepath="public.pem"):
+    """
+    Save the RSA public key to a file for later use in encryption.
+    """
     with open(pub_filepath, 'wb') as pub_file:
         pub_file.write(public_key)
 
 
 def save_encrypted_rsa_private_key(private_key, password, priv_filepath="private_enc.pem"):
+    """
+    Encrypt the RSA private key (Priv) using AES (K2 derived from the password).
+    Save the encrypted key to a file.
+    """
     k2 = derive_aes_key_from_password(password)
     cipher = AES.new(k2, AES.MODE_EAX)
     ciphertext, tag = cipher.encrypt_and_digest(private_key)
@@ -54,6 +61,9 @@ def save_encrypted_rsa_private_key(private_key, password, priv_filepath="private
 
 
 def load_encrypted_rsa_private_key(password, priv_filepath="private_enc.pem"):
+    """
+    Load and decrypt the RSA private key using the AES key (K2 derived from the password).
+    """
     try:
         with open(priv_filepath, 'rb') as priv_file:
             content = priv_file.read()
@@ -71,19 +81,29 @@ def load_encrypted_rsa_private_key(password, priv_filepath="private_enc.pem"):
         raise Exception(f"Failed to load private key: {str(e)}")
 
 
-# AES Key Encryption/Decryption with RSA
 def encrypt_aes_key_rsa(aes_key, public_key):
+    """
+    Encrypt the AES key (K1) using the RSA public key.
+    """
     cipher_rsa = PKCS1_OAEP.new(public_key)
     return cipher_rsa.encrypt(aes_key)
 
 
 def decrypt_aes_key_rsa(encrypted_aes_key, private_key):
+    """
+    Decrypt the AES key (K1) using the RSA private key.
+    """
     cipher_rsa = PKCS1_OAEP.new(private_key)
     return cipher_rsa.decrypt(encrypted_aes_key)
 
 
-# Function to handle file encryption
+# === File and Folder Encryption/Decryption ===
+
 def encrypt_file(filepath, aes_key, rsa_public_key=None):
+    """
+    Encrypt a file using AES (K1). Optionally encrypt K1 with RSA public key.
+    Save the encrypted file and the RSA-encrypted key (.key file).
+    """
     try:
         # Convert hex key back to bytes
         key = bytes.fromhex(aes_key)
@@ -114,6 +134,10 @@ def encrypt_file(filepath, aes_key, rsa_public_key=None):
 
 
 def decrypt_file(filepath, rsa_private_key):
+    """
+    Decrypt a file using RSA (to decrypt K1) and AES.
+    Deletes the .key file after decryption.
+    """
     try:
         # Load the RSA-encrypted AES key
         key_filepath = f"{filepath}.key"
@@ -151,8 +175,11 @@ def decrypt_file(filepath, rsa_private_key):
         messagebox.showerror("Decryption failed", f"Decryption failed: {str(e)}")
 
 
-# Folder Encryption/Decryption
 def process_folder(folder_path, aes_key, mode, rsa_public_key=None, rsa_private_key=None):
+    """
+    Process all files in a folder (encrypt or decrypt). Calls file-specific
+    encryption/decryption functions for each file.
+    """
     try:
         for root, dirs, files in os.walk(folder_path):
             for file in files:
@@ -166,8 +193,12 @@ def process_folder(folder_path, aes_key, mode, rsa_public_key=None, rsa_private_
         messagebox.showerror("Error", f"Failed to process folder: {str(e)}")
 
 
-# Input Validation Functions
+# === Validation ===
+
 def validate_file_path(filepath):
+    """
+    Validate if a file or directory path exists. Raise appropriate exceptions for invalid inputs.
+    """
     if not os.path.exists(filepath):
         raise FileNotFoundError(f"The path '{filepath}' does not exist.")
     if os.path.isdir(filepath):
@@ -175,11 +206,15 @@ def validate_file_path(filepath):
 
 
 def validate_password(password):
+    """
+    Validate if a password is non-empty.
+    """
     if not password or len(password.strip()) == 0:
         raise ValueError("Password cannot be empty.")
 
 
-# GUI setup
+# === GUI Functions ===
+
 def browse_file():
     filepath = filedialog.askopenfilename(filetypes=[("All Files", "*.*")])
     file_entry.delete(0, tk.END)
@@ -253,7 +288,8 @@ def decrypt():
         status_label.config(text=f"Decryption failed: {str(e)}", fg="red")
 
 
-# GUI Setup
+# === GUI Setup ===
+
 root = tk.Tk()
 root.title("File/Folder Encryption & Decryption")
 
