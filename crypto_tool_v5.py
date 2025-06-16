@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import simpledialog, messagebox
 import random
 
-
 # === Error-Correcting Code Functions ===
 """
 Hamming (7,4) Code Parameters:
@@ -15,8 +14,12 @@ Hamming (7,4) Code Parameters:
 """
 
 
+# Function to encode a 4-bit binary string into a 7-bit Hamming (7,4) codeword.
 def hamming_encode(bit_string):
-    """Encodes a bit string using Hamming (7,4) code."""
+    """
+    Encodes a bit string using Hamming (7,4) code.
+    Instead of the generation matrix.
+    """
     if len(bit_string) != 4:
         raise ValueError(f"Input must be 4-bit string.")
 
@@ -31,6 +34,7 @@ def hamming_encode(bit_string):
     return encoded_word
 
 
+# Function to decode a 7-bit Hamming codeword, correct any single-bit error, and recover the original 4-bit message.
 def hamming_decode(encoded_string):
     """Decodes a Hamming (7,4) codeword, correcting a single error if present."""
     if len(encoded_string) != 7:
@@ -64,22 +68,32 @@ def hamming_decode(encoded_string):
     return ''.join(corrected), original_data, error_position
 
 
+# Function to encode a binary string of arbitrary length using Hamming (7,4) code.
+# Pads the string to ensure its length is a multiple of 4, encodes it block by block, and returns the encoded result.
 def encode_arbitrary_length(bit_string):
     """Encodes a bit string of arbitrary length using Hamming (7,4) code."""
     if not all(c in "01" for c in bit_string):
         raise ValueError("Input must be a binary string.")
 
-    # Pad the bit string to make its length a multiple of 4
+    # Calculate the padding needed to make the length a multiple of 4
     padding = (4 - len(bit_string) % 4) % 4
-    bit_string = bit_string + "0" * padding
 
-    # Encode in blocks of 4 bits
+    # Add padding to the input string
+    bit_string += '0' * padding
+
+    # Split the padded string into blocks of 4 bits
     blocks = [bit_string[i:i + 4] for i in range(0, len(bit_string), 4)]
+
+    # Encode each block using Hamming (7,4) code
     encoded_blocks = [hamming_encode(block) for block in blocks]
 
+    # Join the encoded blocks into a single string and return with the padding value
     return ''.join(encoded_blocks), padding
 
 
+
+# Function to decode an arbitrary-length encoded string processed in blocks of 7 bits.
+# It also corrects errors and removes padding applied during encoding.
 def decode_arbitrary_length(encoded_string, padding):
     """Decodes a Hamming (7,4) encoded string for arbitrary-length input and shows error positions."""
     if len(encoded_string) % 7 != 0:
@@ -105,6 +119,8 @@ def decode_arbitrary_length(encoded_string, padding):
     return decoded_string, error_positions
 
 
+# Function to introduce errors into an encoded binary string.
+# Allows either manual specification of error positions or random injection of a specified number of errors.
 def introduce_errors(encoded_string, num_errors=None, error_positions=None):
     """
     Introduces errors into an encoded string.
@@ -165,7 +181,7 @@ if __name__ == "__main__":
                 print("    ERROR: Decoding or correction failed!")
             else:
                 print("    SUCCESS: Decoded correctly.")
-"""
+
 # Input: 1101011001
 encoded, padding = encode_arbitrary_length("1101011001")
 print(f"Encoded: {encoded}, Padding: {padding}")
@@ -175,6 +191,7 @@ print(f"Erroneous: {erroneous}, Errors: {errors}")
 # Decode
 decoded, error_positions = decode_arbitrary_length(erroneous, padding)
 print(f"Decoded: {decoded}, Error Positions: {error_positions}")
+"""
 
 
 # === GUI Functions ===
@@ -250,7 +267,8 @@ def decode_gui():
         decoded, error_positions = decode_arbitrary_length(encoded_string, padding)
 
         # Format error positions for display
-        error_positions_display = ", ".join(map(str, [pos + 1 for pos in error_positions]))  # Convert to 1-based indices
+        error_positions_display = ", ".join(
+            map(str, [pos + 1 for pos in error_positions]))  # Convert to 1-based indices
         if not error_positions_display:
             error_positions_display = "No errors detected."
 
